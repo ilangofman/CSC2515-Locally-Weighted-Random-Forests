@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 
 def load_heart_data(file_path):
@@ -8,9 +9,12 @@ def load_heart_data(file_path):
 	target = data['target']
 	X = data.drop(columns=['target'])
 
-	X_train, X_test, y_train, y_test = train_test_split(X, target, test_size=0.2, random_state=6)
+	scaler = StandardScaler().fit(X)
+	X_scaled = scaler.transform(X)
 
-	return X_train.to_numpy(), X_test.to_numpy(), y_train.to_numpy(), y_test.to_numpy()
+	X_train, X_test, y_train, y_test = train_test_split(X_scaled, target, test_size=0.2, random_state=6)
+
+	return X_train, X_test, y_train, y_test
 
 	
 def load_tweet_data(file_path):
