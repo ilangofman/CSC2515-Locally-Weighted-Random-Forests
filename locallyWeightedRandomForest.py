@@ -4,14 +4,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier
 from typing import *
 
-def euclidean_distance(x_1:np.ndarray, x_2:np.ndarray) -> float:
-    return np.linalg.norm(x_1 - x_2)
-
-def _mean(dataset: np.ndarray) -> np.ndarray:
-    return np.mean(dataset, axis = 0)
-
-class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
-
+class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
 
     def __init__(self, 
                  n_estimators:int=100, 
@@ -64,17 +57,24 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
             self.estimator_datasets[_decision_tree] = sampled_X, sampled_y
         
 
-    def predict(self, test_X:np.ndarray, temperature:float = 1.0, distance_function:Callable = euclidean_distance, aggregation_function:Callable = _mean):
+    def predict(self, 
+                test_X:np.ndarray, 
+                temperature:float = 1.0, 
+                distance_function:Callable = lambda a,b: 1,
+                distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
         '''
         Calculate the predictions given the distance function and the temperature value for 
         aggregating the distance values
 
         Input: test_X - the data to calculate the predictions with 
-            distance_function - a function that takes in two parameters 
+               distance_function - a function that takes in two points and returns the distances between them
+               temperature - input to the distance softmax calculation
+               distance_aggregation_function - a function that takes in three parameters 
                     * point - a single point to predict on
-                    * X - the dataset used to train the classifier
-                    This function is meant to allow for a flexible calculation of distances which will get aggregated afterwards
-                temperature - input to the distance softmax calculation
+                    * dataset - the dataset used to train the classifier
+                    * distance_func - Which will be the distance function passed in. 
+                    This function determines how to aggragate the distances between the test point and the dataset. It 
+                    aims to provide a flexible approach to calculating the distance in different ways. 
 
         Output: predictions numpy array 
         '''
@@ -88,9 +88,7 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
             for j, _estimator in enumerate(self.estimators):
                 sampled_dataset = self.estimator_datasets[_estimator]
                 sampled_X = sampled_dataset[0]
-                #TODO Check that I'm averaging each ferature and not each point
-                sample_point = _mean(sampled_X)
-                estimator_distances[j] = distance_function(test_point, sample_point)
+                estimator_distances[j] = distance_aggregation_function(test_point, sampled_X, distance_function)
 
             # Calculate the weights. Now all the weights should add to 1. 
             prediction_weights = self.calculate_weights(estimator_distances, temperature)
