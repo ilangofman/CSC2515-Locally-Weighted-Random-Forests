@@ -31,9 +31,7 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
         self.criterion = criterion
         self.max_depth = max_depth
 
-        self.max_samples = max_samples
-        if self.max_samples is None:
-            self.max_samples = 1.0
+        self.max_samples = max_samples if max_samples else 1.0
 
 
     def fit(self, X, y, sample_replace = True):
@@ -60,6 +58,8 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
             _decision_tree = DecisionTreeClassifier(max_depth=self.max_depth, criterion=self.criterion)
             _decision_tree.fit(sampled_X, sampled_y)
             self.estimators.append(_decision_tree)
+            # we could probably just record the indexes that we sampled might be more
+            # efficient if we have many estimators
             self.estimator_datasets[_decision_tree] = sampled_X, sampled_y
         
 
