@@ -2,21 +2,22 @@ import numpy as np
 from sklearn.utils import resample
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier
+from typing import *
 
-def euclidean_distance(x_1, x_2):
+def euclidean_distance(x_1:np.ndarray, x_2:np.ndarray) -> float:
     return np.linalg.norm(x_1 - x_2)
 
-def _mean(dataset):
+def _mean(dataset: np.ndarray) -> np.ndarray:
     return np.mean(dataset, axis = 0)
 
 class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
 
 
     def __init__(self, 
-                 n_estimators=100, 
-                 criterion="gini", 
-                 max_depth=None, 
-                 max_samples=None):
+                 n_estimators:int=100, 
+                 criterion:str="gini", 
+                 max_depth: Union[int,None] = None, 
+                 max_samples: Union[float,None] = None):
 
         '''
         Constructor for the model class
@@ -34,7 +35,7 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
         self.max_samples = max_samples if max_samples else 1.0
 
 
-    def fit(self, X, y, sample_replace = True):
+    def fit(self, X:np.ndarray, y:np.ndarray, sample_replace:bool = True):
 
         '''
         Fit the dataset to an ensemble of decision trees. Each decision tree
@@ -44,8 +45,8 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
         Input: X - the dataset feature values
             y - the target values corresponding to the dataset
         '''
-        self.estimators = []
-        self.estimator_datasets = {}
+        self.estimators : List[ClassifierMixin] = []
+        self.estimator_datasets= {}
 
         total_samples = y.shape[0]
         samples_to_draw = int(total_samples * self.max_samples)
@@ -63,7 +64,7 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
             self.estimator_datasets[_decision_tree] = sampled_X, sampled_y
         
 
-    def predict(self, test_X, temperature = 1.0, distance_function = euclidean_distance, aggregation_function = _mean):
+    def predict(self, test_X:np.ndarray, temperature:float = 1.0, distance_function:Callable = euclidean_distance, aggregation_function:Callable = _mean):
         '''
         Calculate the predictions given the distance function and the temperature value for 
         aggregating the distance values
@@ -117,7 +118,7 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
 
         return predictions
 
-    def calculate_weights(self, estimator_distances, temperature):
+    def calculate_weights(self, estimator_distances:np.ndarray, temperature:float):
         '''
         Calculate the weights of the trees using the distances.
         The weights are the softmax output of the distances. 
