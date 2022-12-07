@@ -106,6 +106,10 @@ class LocallyWeightedRandomForest(BaseEstimator,ClassifierMixin):
                 # Add the weight of that prediction to the predicted class' running total
                 estimator_predictions[est_prediction] += prediction_weights[j] 
 
+            # alternative way to make predictions using the probability distribution of each model
+            # res = np.zeros(self.estimators[0].n_classes_)
+            # for j, _estimator in enumerate(self.estimators):
+            #     res += _estimator.predict_proba([test_point]) * prediction_weights[j]
             
             # The final prediction will be the class with the largest sum of its weights
             # Get the argmax of the dictionary. I.e. key with the largest value
