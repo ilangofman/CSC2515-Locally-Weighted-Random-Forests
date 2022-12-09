@@ -67,5 +67,5 @@ def clean_string(test_string):
     
 
     return test_string
-
-print(clean_string("The 23 quick and brown Fox, jumps over the lazy Dog testing some verbs running sprint tasted saw."))
+if __name__ == "__main__":
+    print(clean_string("The 23 quick and brown Fox, jumps over the lazy Dog testing some verbs running sprint tasted saw."))
