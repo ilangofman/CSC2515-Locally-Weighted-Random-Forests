@@ -59,7 +59,7 @@ def clean_string(test_string):
     token_str = string_to_token(test_string)
     token_str = remove_capitals(token_str)
     token_str = remove_punct_stop(token_str)
-    token_str = correct_spelling(token_str)
+    # token_str = correct_spelling(token_str)
     # token_str = translate_numbers(token_str)
     token_str = num_toeknize(token_str)
     token_str = lemmatize(token_str)
