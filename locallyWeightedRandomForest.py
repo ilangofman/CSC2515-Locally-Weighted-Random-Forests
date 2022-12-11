@@ -23,6 +23,14 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         criterion - splitting criteria when training the individual trees
         max_depth - the max depth for each individual tree
         max_samples - the portion of the dataset subsampled for each tree. 
+                       distance_function - a function that takes in two points and returns the distances between them
+        temperature - input to the distance softmax calculation
+        distance_aggregation_function - a function that takes in three parameters 
+            * point - a single point to predict on
+            * dataset - the dataset used to train the classifier
+            * distance_func - Which will be the distance function passed in. 
+            This function determines how to aggragate the distances between the test point and the dataset. It 
+            aims to provide a flexible approach to calculating the distance in different ways. 
         '''
 
         self.n_estimators = n_estimators
@@ -91,15 +99,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         aggregating the distance values
 
         Input: test_X - the data to calculate the predictions with 
-               distance_function - a function that takes in two points and returns the distances between them
-               temperature - input to the distance softmax calculation
-               distance_aggregation_function - a function that takes in three parameters 
-                    * point - a single point to predict on
-                    * dataset - the dataset used to train the classifier
-                    * distance_func - Which will be the distance function passed in. 
-                    This function determines how to aggragate the distances between the test point and the dataset. It 
-                    aims to provide a flexible approach to calculating the distance in different ways. 
-
         Output: predictions numpy array 
         '''
 
