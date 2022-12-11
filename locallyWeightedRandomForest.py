@@ -109,8 +109,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             estimator_distances = np.zeros(self.n_estimators)
 
             for j, _estimator in enumerate(self.estimators):
-                sampled_dataset = self.estimator_datasets[_estimator]
-                sampled_X = sampled_dataset[0]
+                sampled_index = self.estimator_datasets[_estimator]
+                sampled_X = self.train_X[sampled_index]
                 estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
 
             # Calculate the weights. Now all the weights should add to 1. 
@@ -162,8 +162,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             estimator_distances = np.zeros(self.n_estimators)
             current_res = np.zeros((self.n_estimators, self.estimators[0].n_classes_))
             for j, _estimator in enumerate(self.estimators):
-                sampled_dataset = self.estimator_datasets[_estimator]
-                sampled_X = sampled_dataset[0]
+                sampled_index = self.estimator_datasets[_estimator]
+                sampled_X = self.train_X[sampled_index]
                 estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
                 current_res[j,:] = _estimator.predict_proba([test_point])
 
