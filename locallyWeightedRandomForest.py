@@ -108,7 +108,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             for j, _estimator in enumerate(self.estimators):
                 sampled_index = self.estimator_datasets[_estimator]
                 sampled_X = self.train_X[sampled_index]
-                
+
                 estimator_distances[j] = distance_aggregation_function(test_point, sampled_X, distance_function)
 
             # Calculate the weights. Now all the weights should add to 1. 
@@ -144,7 +144,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         '''
         Calculate the prediction probability given the distance function and the temperature value for 
         aggregating the distance values
-
         Input: test_X - the data to calculate the predictions with 
                distance_function - a function that takes in two points and returns the distances between them
                temperature - input to the distance softmax calculation
@@ -154,7 +153,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
                     * distance_func - Which will be the distance function passed in. 
                     This function determines how to aggragate the distances between the test point and the dataset. It 
                     aims to provide a flexible approach to calculating the distance in different ways. 
-
         Output: predictions numpy array 
         '''
 
@@ -164,8 +162,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             estimator_distances = np.zeros(self.n_estimators)
             current_res = np.zeros((self.n_estimators, self.estimators[0].n_classes_))
             for j, _estimator in enumerate(self.estimators):
-                sampled_dataset = self.estimator_datasets[_estimator]
-                sampled_X = sampled_dataset[0]
+                sampled_index = self.estimator_datasets[_estimator]
+                sampled_X = self.train_X[sampled_index]
                 estimator_distances[j] = distance_aggregation_function(test_point, sampled_X, distance_function)
                 current_res[j,:] = _estimator.predict_proba([test_point])
 
