@@ -11,7 +11,9 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
                  criterion:str="gini", 
                  max_depth: Union[int,None] = None, 
                  max_samples: Union[float,None] = None,
-                 temp: float = 1):
+                 temp: float = 1,
+                 distance_function:Callable = lambda a,b: 1,
+                 distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
 
         '''
         Constructor for the model class
@@ -28,6 +30,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
 
         self.max_samples = max_samples if max_samples else 1.0
         self.temp = temp
+        self.distance_function = distance_function
+        self.distance_aggregation_function = distance_aggregation_function
 
     def get_params(self, deep=True):
         return {
@@ -35,7 +39,9 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             "criterion" : self.criterion,
             "max_depth" : self.max_depth,
             "max_samples" : self.max_samples,
-            "temp" : self.temp
+            "temp" : self.temp,
+            "distance_function" : self.distance_function,
+            "distance_aggregation_function" : self.distance_aggregation_function
         }
     
     def set_params(self, **params):
@@ -74,9 +80,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         
 
     def predict(self, 
-                test_X:np.ndarray, 
-                distance_function:Callable = lambda a,b: 1,
-                distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
+                test_X:np.ndarray):
         '''
         Calculate the predictions given the distance function and the temperature value for 
         aggregating the distance values
@@ -103,7 +107,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             for j, _estimator in enumerate(self.estimators):
                 sampled_dataset = self.estimator_datasets[_estimator]
                 sampled_X = sampled_dataset[0]
-                estimator_distances[j] = distance_aggregation_function(test_point, sampled_X, distance_function)
+                estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
 
             # Calculate the weights. Now all the weights should add to 1. 
             prediction_weights = self.calculate_weights(estimator_distances, self.temp)
@@ -132,9 +136,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         return predictions
     
     def predict_proba(self, 
-                test_X:np.ndarray, 
-                distance_function:Callable = lambda a,b: 1,
-                distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
+                test_X:np.ndarray):
         '''
         Calculate the prediction probability given the distance function and the temperature value for 
         aggregating the distance values
@@ -160,7 +162,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             for j, _estimator in enumerate(self.estimators):
                 sampled_dataset = self.estimator_datasets[_estimator]
                 sampled_X = sampled_dataset[0]
-                estimator_distances[j] = distance_aggregation_function(test_point, sampled_X, distance_function)
+                estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
                 current_res[j,:] = _estimator.predict_proba([test_point])
 
             # Calculate the weights. Now all the weights should add to 1. 
@@ -185,16 +187,18 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         '''
 
         weights = np.zeros(self.n_estimators)
-        
         # TODO Figure out, should it be distance or -1 * distance because closer distances should get a larger value?
 
         # Calculate Denominator values
-        total_den_sum = 0
-        for distance in estimator_distances:
-            total_den_sum += np.exp(-distance / (2 * temperature ** 2))
+        # total_den_sum = 0
+        # for distance in estimator_distances:
+        #     total_den_sum += np.exp(-distance / (2 * temperature ** 2))
 
-        for i, distance in enumerate(estimator_distances):
-            weights[i] = np.exp(-distance / (2 * temperature ** 2)) / total_den_sum
+        # for i, distance in enumerate(estimator_distances):
+        #     weights[i] = np.exp(-distance / (2 * temperature ** 2)) / total_den_sum
+        weights = np.exp(- estimator_distances / (2 * temperature ** 2))
+
+        weights = weights / weights.sum()
         
         return weights
 
