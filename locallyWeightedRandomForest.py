@@ -3,6 +3,7 @@ from sklearn.utils import resample
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier
 from typing import *
+import random
 
 class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
 
@@ -65,18 +66,22 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
 
         total_samples = y.shape[0]
         samples_to_draw = int(total_samples * self.max_samples)
-        
+        self.train_X = X
+        self.train_y = y
 
         for _ in range(self.n_estimators):
             # First we sub-sample the dataset
-            sampled_X, sampled_y = resample(X,y,n_samples=samples_to_draw,replace=sample_replace)
+            # sampled_X, sampled_y = resample(X,y,n_samples=samples_to_draw,replace=sample_replace)
+            sampled_index  = random.choices(range(0, len(X)), k=samples_to_draw)
+            sampled_X = X[sampled_index]
+            sampled_y = y[sampled_index]
 
             _decision_tree = DecisionTreeClassifier(max_depth=self.max_depth, criterion=self.criterion)
             _decision_tree.fit(sampled_X, sampled_y)
             self.estimators.append(_decision_tree)
             # we could probably just record the indexes that we sampled might be more
             # efficient if we have many estimators
-            self.estimator_datasets[_decision_tree] = sampled_X, sampled_y
+            self.estimator_datasets[_decision_tree] = sampled_index
         
 
     def predict(self, 
@@ -140,7 +145,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         '''
         Calculate the prediction probability given the distance function and the temperature value for 
         aggregating the distance values
-
         Input: test_X - the data to calculate the predictions with 
                distance_function - a function that takes in two points and returns the distances between them
                temperature - input to the distance softmax calculation
@@ -150,7 +154,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
                     * distance_func - Which will be the distance function passed in. 
                     This function determines how to aggragate the distances between the test point and the dataset. It 
                     aims to provide a flexible approach to calculating the distance in different ways. 
-
         Output: predictions numpy array 
         '''
 
