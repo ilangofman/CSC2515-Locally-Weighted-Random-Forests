@@ -208,3 +208,22 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         
         return weights
 
+    def analyze_distances(self, 
+                    test_X:np.ndarray):
+            '''
+            Calculate the predictions given the distance function and the temperature value for 
+            aggregating the distance values
+
+            Input: test_X - the data to calculate the predictions with 
+            Output: predictions numpy array 
+            '''
+
+            distances = np.zeros((test_X.shape[0], self.n_estimators))
+
+            for i, test_point in enumerate(test_X):
+                for j, _estimator in enumerate(self.estimators):
+                    sampled_index = self.estimator_datasets[_estimator]
+                    sampled_X = self.train_X[sampled_index]
+                    distances[i,j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
+                        
+            return distances
