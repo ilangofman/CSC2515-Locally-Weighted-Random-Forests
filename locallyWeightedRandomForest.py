@@ -14,7 +14,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
                  max_samples: Union[float,None] = None,
                  temp: float = 1,
                  distance_function:Callable = lambda a,b: 1,
-                 distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
+                 distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1,
+                 random_state: int = None):
 
         '''
         Constructor for the model class
@@ -41,6 +42,9 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         self.temp = temp
         self.distance_function = distance_function
         self.distance_aggregation_function = distance_aggregation_function
+
+        if random_state:
+            np.random.seed(random_state)
 
     def get_params(self, deep=True):
         return {
@@ -136,7 +140,7 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
             # The final prediction will be the class with the largest sum of its weights
             # Get the argmax of the dictionary. I.e. key with the largest value
             predictions[i]  = max(estimator_predictions, key=estimator_predictions.get)
-
+        # return self.predict_proba(test_X).argmax(axis=1)
         return predictions
     
     def predict_proba(self, 
@@ -204,3 +208,22 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         
         return weights
 
+    def analyze_distances(self, 
+                    test_X:np.ndarray):
+            '''
+            Calculate the predictions given the distance function and the temperature value for 
+            aggregating the distance values
+
+            Input: test_X - the data to calculate the predictions with 
+            Output: predictions numpy array 
+            '''
+
+            distances = np.zeros((test_X.shape[0], self.n_estimators))
+
+            for i, test_point in enumerate(test_X):
+                for j, _estimator in enumerate(self.estimators):
+                    sampled_index = self.estimator_datasets[_estimator]
+                    sampled_X = self.train_X[sampled_index]
+                    distances[i,j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
+                        
+            return distances
