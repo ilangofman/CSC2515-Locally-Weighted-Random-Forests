@@ -14,7 +14,8 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
                  max_samples: Union[float,None] = None,
                  temp: float = 1,
                  distance_function:Callable = lambda a,b: 1,
-                 distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1):
+                 distance_aggregation_function:Callable  = lambda point,dataset,distance_func: 1,
+                 random_state: int = None):
 
         '''
         Constructor for the model class
@@ -41,6 +42,9 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         self.temp = temp
         self.distance_function = distance_function
         self.distance_aggregation_function = distance_aggregation_function
+
+        if random_state:
+            np.random.seed(random_state)
 
     def get_params(self, deep=True):
         return {
@@ -102,41 +106,42 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         Output: predictions numpy array 
         '''
 
-        # predictions = np.zeros(test_X.shape[0])
+        predictions = np.zeros(test_X.shape[0])
 
-        # for i, test_point in enumerate(test_X):
-        #     estimator_predictions = {}
-        #     estimator_distances = np.zeros(self.n_estimators)
+        for i, test_point in enumerate(test_X):
+            estimator_predictions = {}
+            estimator_distances = np.zeros(self.n_estimators)
 
-            # for j, _estimator in enumerate(self.estimators):
-            #     sampled_index = self.estimator_datasets[_estimator]
-            #     sampled_X = self.train_X[sampled_index]
-            #     estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
+            for j, _estimator in enumerate(self.estimators):
+                sampled_index = self.estimator_datasets[_estimator]
+                sampled_X = self.train_X[sampled_index]
+                estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
 
-        #     # Calculate the weights. Now all the weights should add to 1. 
-        #     prediction_weights = self.calculate_weights(estimator_distances, self.temp)
+            # Calculate the weights. Now all the weights should add to 1. 
+            prediction_weights = self.calculate_weights(estimator_distances, self.temp)
 
-        #     # Predict the value using the estimators and the associated weights. 
-        #     for j, _estimator in enumerate(self.estimators):
-        #         # Make the prediction 
-        #         est_prediction = _estimator.predict([test_point])[0]
+            # Predict the value using the estimators and the associated weights. 
+            for j, _estimator in enumerate(self.estimators):
+                # Make the prediction 
+                est_prediction = _estimator.predict([test_point])[0]
                 
-        #         # If this class hasn't been predicted before, initialize the sum as 0. 
-        #         if est_prediction not in estimator_predictions:
-        #             estimator_predictions[est_prediction] = 0
+                # If this class hasn't been predicted before, initialize the sum as 0. 
+                if est_prediction not in estimator_predictions:
+                    estimator_predictions[est_prediction] = 0
 
-        #         # Add the weight of that prediction to the predicted class' running total
-        #         estimator_predictions[est_prediction] += prediction_weights[j] 
+                # Add the weight of that prediction to the predicted class' running total
+                estimator_predictions[est_prediction] += prediction_weights[j] 
 
-        #     # alternative way to make predictions using the probability distribution of each model
-        #     # res = np.zeros(self.estimators[0].n_classes_)
-        #     # for j, _estimator in enumerate(self.estimators):
-        #     #     res += _estimator.predict_proba([test_point]) * prediction_weights[j]
+            # alternative way to make predictions using the probability distribution of each model
+            # res = np.zeros(self.estimators[0].n_classes_)
+            # for j, _estimator in enumerate(self.estimators):
+            #     res += _estimator.predict_proba([test_point]) * prediction_weights[j]
             
-        #     # The final prediction will be the class with the largest sum of its weights
-        #     # Get the argmax of the dictionary. I.e. key with the largest value
-        #     predictions[i]  = max(estimator_predictions, key=estimator_predictions.get)
-        return self.predict_proba(test_X).argmax(axis=1)
+            # The final prediction will be the class with the largest sum of its weights
+            # Get the argmax of the dictionary. I.e. key with the largest value
+            predictions[i]  = max(estimator_predictions, key=estimator_predictions.get)
+        # return self.predict_proba(test_X).argmax(axis=1)
+        return predictions
     
     def predict_proba(self, 
                 test_X:np.ndarray):
