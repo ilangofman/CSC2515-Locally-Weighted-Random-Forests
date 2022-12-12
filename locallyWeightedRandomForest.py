@@ -23,6 +23,14 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         criterion - splitting criteria when training the individual trees
         max_depth - the max depth for each individual tree
         max_samples - the portion of the dataset subsampled for each tree. 
+                       distance_function - a function that takes in two points and returns the distances between them
+        temperature - input to the distance softmax calculation
+        distance_aggregation_function - a function that takes in three parameters 
+            * point - a single point to predict on
+            * dataset - the dataset used to train the classifier
+            * distance_func - Which will be the distance function passed in. 
+            This function determines how to aggragate the distances between the test point and the dataset. It 
+            aims to provide a flexible approach to calculating the distance in different ways. 
         '''
 
         self.n_estimators = n_estimators
@@ -91,15 +99,6 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         aggregating the distance values
 
         Input: test_X - the data to calculate the predictions with 
-               distance_function - a function that takes in two points and returns the distances between them
-               temperature - input to the distance softmax calculation
-               distance_aggregation_function - a function that takes in three parameters 
-                    * point - a single point to predict on
-                    * dataset - the dataset used to train the classifier
-                    * distance_func - Which will be the distance function passed in. 
-                    This function determines how to aggragate the distances between the test point and the dataset. It 
-                    aims to provide a flexible approach to calculating the distance in different ways. 
-
         Output: predictions numpy array 
         '''
 
@@ -109,10 +108,10 @@ class LocallyWeightedRandomForest(BaseEstimator, ClassifierMixin):
         #     estimator_predictions = {}
         #     estimator_distances = np.zeros(self.n_estimators)
 
-        #     for j, _estimator in enumerate(self.estimators):
-        #         sampled_dataset = self.estimator_datasets[_estimator]
-        #         sampled_X = sampled_dataset[0]
-        #         estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
+            # for j, _estimator in enumerate(self.estimators):
+            #     sampled_index = self.estimator_datasets[_estimator]
+            #     sampled_X = self.train_X[sampled_index]
+            #     estimator_distances[j] = self.distance_aggregation_function(test_point, sampled_X, self.distance_function)
 
         #     # Calculate the weights. Now all the weights should add to 1. 
         #     prediction_weights = self.calculate_weights(estimator_distances, self.temp)
